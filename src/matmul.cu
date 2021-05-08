@@ -30,7 +30,7 @@ __global__ void matmul_kernel(float* d_a,float* d_b, float* d_c, int out_w, int 
 
 void Matmul::matmult_cuda(int m, int k, int n, float** d_a, float** d_b, float** d_c){
     assert(*d_a && *d_b && *d_c);
-    const dim3 blockDim(32,32);
+    const dim3 blockDim(16,16);
     const dim3 gridDim(iDivUp(m,blockDim.x),iDivUp(n,blockDim.y));
 
     matmul_kernel<<<gridDim,blockDim>>>(*d_a, *d_b, *d_c, m, n, k);
