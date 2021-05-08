@@ -1,8 +1,29 @@
 #include<iostream>
 #include<vector>
+#include<cmath>
 
 #include "matmul.hpp"
 
+#include<cuda.h>
+#include<cuda_runtime.h>
+
+float error_check(const float *mat_a, const float *mat_b, int m, int n)
+{
+    float error = 0;
+    uint64_t cnt = 0;
+    for(int j = 0; j < n; ++j)
+    {
+        for(int i = 0; i < m; ++i)
+        {
+            const int pos = j * m + i;
+            error += std::fabs(mat_a[pos] - mat_b[pos]);
+            ++cnt;
+        }
+    }
+    error /= cnt;
+
+    return error;
+}
 
 int main(int argc, char** argv)
 {
@@ -13,59 +34,81 @@ int main(int argc, char** argv)
     auto mat_b = std::vector<float>();
     auto mat_c = std::vector<float>();
 
-    mm.genMat(10,10,&mat_a);
-    mm.genMat(10,10,&mat_b);
-    mm.genMat(10,10,&mat_c);
+    int m = 10;
+    int k = 10;
+    int n = 10;
+
+    mm.genMat(m,k,&mat_a);
+    mm.genMat(k,n,&mat_b);
+    mm.genMat(m,n,&mat_c);
+
+    std::cout << "-------- naive C/C++ ---------" << std::endl;
+    std::cout << " " << std::endl;
 
     double elapsed=0;
     const int iteration = 10000;
     for (int i=0; i<iteration; i++)
     {
         tt.tic();
-        mm.matmult(10,10,10,&mat_a[0],&mat_b[0],&mat_c[0]);
+        mm.matmult(m,k,n,&mat_a[0],&mat_b[0],&mat_c[0]);
         elapsed += tt.toc();
     }
-
-    //mm.dumpMat(10,10,mat_a);
-    std::cout << " " << std::endl;
-    //mm.dumpMat(10,10,mat_b);
-    std::cout << " " << std::endl;
-    mm.dumpMat(10,10,mat_c);
+    mm.dumpMat(m,n,mat_c);
 
     printf("naive %lf ms\n", 1000.0 * elapsed / iteration);
 
-    //mm.genMat(10,10,&mat_c);
-    mat_c.resize(10,10);
+    std::cout << "-------- opencv ---------" << std::endl;
+    std::cout << " " << std::endl;
+
+    auto mat_c_cv = std::vector<float>();
+    mm.genMat(m,n,&mat_c_cv);
     for (int i=0; i<iteration; i++)
     {
         tt.tic();
-        mm.matmult_opencv2(10,10,10,&mat_a[0],&mat_b[0],&mat_c[0]);
+        mm.matmult_opencv2(m,k,n,&mat_a[0],&mat_b[0],&mat_c_cv[0]);
         elapsed += tt.toc();
     }
-
-    //mm.dumpMat(10,10,mat_a);
-    std::cout << " " << std::endl;
-    //mm.dumpMat(10,10,mat_b);
-    std::cout << " " << std::endl;
-    mm.dumpMat(10,10,mat_c);
+    mm.dumpMat(m,n,mat_c_cv);
 
     printf("opencv %lf ms\n", 1000.0 * elapsed / iteration);
 
-    //mm.genMat(10,10,&mat_c);
-    mat_c.resize(10,10);
+    auto mat_c_cuda = std::vector<float>(m*n,0);
+
+    float *d_a = NULL;
+    float *d_b = NULL;
+    float *d_c = NULL;
+    long long a_buffer = m * k * sizeof(float);
+    long long b_buffer = k * n * sizeof(float);
+    long long c_buffer = m * n * sizeof(float);
+    // cudaMalloc((void**)&d_a, a_buffer);
+    // cudaMalloc((void**)&d_b, b_buffer);
+    // cudaMalloc((void**)&d_c, c_buffer);
+    // cudaMemcpy(d_a, &mat_a[0], a_buffer, cudaMemcpyHostToDevice);
+    // cudaMemcpy(d_b, &mat_b[0], b_buffer, cudaMemcpyHostToDevice);
+    // cudaMemcpy(d_c, &mat_c_cuda[0], c_buffer, cudaMemcpyHostToDevice);
+    mm.upload(a_buffer, &mat_a[0], &d_a);
+    mm.upload(b_buffer, &mat_b[0], &d_b);
+    mm.upload(c_buffer, &mat_c_cuda[0], &d_c);
     for(int i = 0; i < iteration; i++)
     {
         tt.tic();
-        mm.matmult_cuda(10,10,10,&mat_a[0],&mat_b[0],&mat_c[0]);
+        mm.matmult_cuda(m,k,n,&d_a,&d_b,&d_c);
+        //mm.matmult_cuda2(m,k,n, &mat_a[0], &mat_b[0], &mat_c_cuda[0]);
         elapsed += tt.toc();
     }
-    //mm.dumpMat(10,10,mat_a);
-    std::cout << " " << std::endl;
-    //mm.dumpMat(10,10,mat_b);
-    std::cout << " " << std::endl;
-    mm.dumpMat(10,10,mat_c);
+    mm.download(c_buffer, d_c, &mat_c_cuda[0]);
+    cudaMemcpy(&mat_c_cuda[0], d_c, c_buffer, cudaMemcpyDeviceToHost);
 
+    mm.dumpMat(m,n,mat_c_cuda);
     printf("cuda %lf ms\n", 1000.0 * elapsed / iteration);
+
+    mm.cudafree(d_a);
+    mm.cudafree(d_b);
+    mm.cudafree(d_c);
+
+    std::cout << "---------- error check ----------" << std::endl;
+    std::cout << "naive vs opencv : " << error_check(&mat_c[0], &mat_c_cv[0],m,n) << std::endl;
+    std::cout << "naive vs cuda : " << error_check(&mat_c[0], &mat_c_cuda[0],m,n) << std::endl;
 
     return 0;
 }

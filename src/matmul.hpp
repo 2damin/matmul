@@ -13,7 +13,9 @@ class Matmul{
 public:
     void matmult(int m, int n, int k, const float* mat_a, const float* mat_b, float* mat_c);
 
-    void matmult_cuda(int m, int n, int k, const float* mat_a, const float* mat_b, float* mat_c);
+    void matmult_cuda(int m, int n, int k, float** d_a, float** d_b, float** d_c);
+
+    void matmult_cuda2(int m, int n, int k, const float* mat_a, const float* mat_b, float* mat_c);
 
     void matmult_opencv(int m, int n, int k, const cv::Mat& mat_a, const cv::Mat& mat_b, cv::Mat& mat_c);
 
@@ -21,6 +23,12 @@ public:
 
     // flag [0 : naive , 1 : cuda, 2 : opencv]
     void genMat(int n, int m, void* _mat, int flag = 0);
+
+    void upload(const long long& buffersize, const float* src, float** dst);
+
+    void download(const long long& buffersize, const float* src, float* dst);
+
+    void cudafree(float* src);
 
     void dumpMat(int n, int m, std::vector<float>& mat);
 };
