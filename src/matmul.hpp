@@ -1,8 +1,10 @@
 #include <iostream>
 #include <time.h>
 #include <stdlib.h>
-
 #include <vector>
+
+#include<cuda.h>
+#include<cuda_runtime.h>
 
 namespace cv{
     class Mat;
@@ -13,7 +15,7 @@ class Matmul{
 public:
     void matmult(int m, int n, int k, const float* mat_a, const float* mat_b, float* mat_c);
 
-    void matmult_cuda(int m, int n, int k, float** d_a, float** d_b, float** d_c);
+    void matmult_cuda(int m, int n, int k, float** d_a, float** d_b, float** d_c, cudaStream_t& stream);
 
     void matmult_cuda2(int m, int n, int k, const float* mat_a, const float* mat_b, float* mat_c);
 
