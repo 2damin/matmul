@@ -34,9 +34,10 @@ int main(int argc, char** argv)
     auto mat_b = std::vector<float>();
     auto mat_c = std::vector<float>();
 
-    int m = 10;
-    int k = 10;
-    int n = 10;
+    int m = 100;
+    int k = 100;
+    int n = 100;
+    const int iteration = 10000;
 
     mm.genMat(m,k,&mat_a);
     mm.genMat(k,n,&mat_b);
@@ -45,17 +46,17 @@ int main(int argc, char** argv)
     std::cout << "-------- naive C/C++ ---------" << std::endl;
     std::cout << " " << std::endl;
 
-    double elapsed=0;
-    const int iteration = 10000;
+    double elapsed = 0;
     for (int i=0; i<iteration; i++)
     {
         tt.tic();
         mm.matmult(m,k,n,&mat_a[0],&mat_b[0],&mat_c[0]);
         elapsed += tt.toc();
     }
-    mm.dumpMat(m,n,mat_c);
+    //mm.dumpMat(m,n,mat_c);
 
     printf("naive %lf ms\n", 1000.0 * elapsed / iteration);
+    elapsed = 0;
 
     std::cout << "-------- opencv ---------" << std::endl;
     std::cout << " " << std::endl;
@@ -68,9 +69,13 @@ int main(int argc, char** argv)
         mm.matmult_opencv2(m,k,n,&mat_a[0],&mat_b[0],&mat_c_cv[0]);
         elapsed += tt.toc();
     }
-    mm.dumpMat(m,n,mat_c_cv);
+    //mm.dumpMat(m,n,mat_c_cv);
 
     printf("opencv %lf ms\n", 1000.0 * elapsed / iteration);
+    elapsed = 0;
+
+    std::cout << "-------- cuda ---------" << std::endl;
+    std::cout << " " << std::endl;
 
     auto mat_c_cuda = std::vector<float>(m*n,0);
 
@@ -80,12 +85,6 @@ int main(int argc, char** argv)
     long long a_buffer = m * k * sizeof(float);
     long long b_buffer = k * n * sizeof(float);
     long long c_buffer = m * n * sizeof(float);
-    // cudaMalloc((void**)&d_a, a_buffer);
-    // cudaMalloc((void**)&d_b, b_buffer);
-    // cudaMalloc((void**)&d_c, c_buffer);
-    // cudaMemcpy(d_a, &mat_a[0], a_buffer, cudaMemcpyHostToDevice);
-    // cudaMemcpy(d_b, &mat_b[0], b_buffer, cudaMemcpyHostToDevice);
-    // cudaMemcpy(d_c, &mat_c_cuda[0], c_buffer, cudaMemcpyHostToDevice);
     mm.upload(a_buffer, &mat_a[0], &d_a);
     mm.upload(b_buffer, &mat_b[0], &d_b);
     mm.upload(c_buffer, &mat_c_cuda[0], &d_c);
@@ -93,13 +92,12 @@ int main(int argc, char** argv)
     {
         tt.tic();
         mm.matmult_cuda(m,k,n,&d_a,&d_b,&d_c);
-        //mm.matmult_cuda2(m,k,n, &mat_a[0], &mat_b[0], &mat_c_cuda[0]);
         elapsed += tt.toc();
     }
     mm.download(c_buffer, d_c, &mat_c_cuda[0]);
-    cudaMemcpy(&mat_c_cuda[0], d_c, c_buffer, cudaMemcpyDeviceToHost);
+    //cudaMemcpy(&mat_c_cuda[0], d_c, c_buffer, cudaMemcpyDeviceToHost);
 
-    mm.dumpMat(m,n,mat_c_cuda);
+    //mm.dumpMat(m,n,mat_c_cuda);
     printf("cuda %lf ms\n", 1000.0 * elapsed / iteration);
 
     mm.cudafree(d_a);

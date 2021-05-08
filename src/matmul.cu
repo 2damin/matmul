@@ -17,9 +17,8 @@ __global__ void matmul_kernel(float* d_a,float* d_b, float* d_c, int out_w, int 
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
 
     if( x > out_w - 1 || y > out_h -1)
-    {
         return;
-    }
+
     float dst = 0.0f;
     for(int i = 0; i < k; ++i)
     {
@@ -30,7 +29,6 @@ __global__ void matmul_kernel(float* d_a,float* d_b, float* d_c, int out_w, int 
 }
 
 void Matmul::matmult_cuda(int m, int k, int n, float** d_a, float** d_b, float** d_c){
-
     assert(*d_a && *d_b && *d_c);
     const dim3 blockDim(32,32);
     const dim3 gridDim(iDivUp(m,blockDim.x),iDivUp(n,blockDim.y));
