@@ -34,9 +34,9 @@ int main(int argc, char** argv)
     auto mat_b = std::vector<float>();
     auto mat_c = std::vector<float>();
 
-    int m = 10;
-    int k = 10;
-    int n = 10;
+    int m = 100;
+    int k = 100;
+    int n = 100;
     const int iteration = 10000;
 
     mm.genMat(m,k,&mat_a);
@@ -99,7 +99,6 @@ int main(int argc, char** argv)
     cudaDeviceSynchronize();
     cudaStreamDestroy(stream);
     mm.download(c_buffer, d_c, &mat_c_cuda[0]);
-    //cudaMemcpy(&mat_c_cuda[0], d_c, c_buffer, cudaMemcpyDeviceToHost);
 
     //mm.dumpMat(m,n,mat_c_cuda);
     printf("cuda %lf ms\n", 1000.0 * elapsed / iteration);
