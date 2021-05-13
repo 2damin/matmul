@@ -22,3 +22,24 @@ cd ..
 ```bash
 ./bin/matmul.exe
 ```
+
+## Result
+
+#### Environment
+
+- CPU : Intel Zeon E5-2643 (6core, 3.4GHz)
+- GPU : NVIDIA Titan XP
+- OS : ubuntu 18.04
+- CUDA : 11.1
+- OpenCV : 4.5.0
+- C++ : 17
+
+#### Performance (ms)
+
+average running time when iterating 10000.
+
+| Matrix size(N*N) | naive C/C++ | OpenCV | CUDA |
+| --- | --- | ------ | ------ |
+| 10 | 0.001814 |  0.00211 | 0.00251 |
+| 100 | 0.829002 |  0.512281 | 0.005964 |
+| 1000  | 1041.928947 | 366.799433 | 1.132146 |
