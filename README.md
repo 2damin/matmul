@@ -1,6 +1,9 @@
 # matmul
 matrix multiplication using naive C/C++, OpenCV, CUDA
 
+![image](https://user-images.githubusercontent.com/29620595/118991874-12c93380-b9bf-11eb-8247-825b876f04c9.png)
+
+
 ## Dependency
 
 - cmake >= 3.10.0
